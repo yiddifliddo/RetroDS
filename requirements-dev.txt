@@ -1,0 +1,4 @@
+# RetroDS has no runtime dependencies beyond the Python standard library
+# (tkinter ships with the official Windows Python installer).
+# These are only needed to build the single-file Windows executable.
+pyinstaller>=6.0

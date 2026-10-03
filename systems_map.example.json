@@ -1,0 +1,6 @@
+{
+  "_comment": "Copy this file to systems_map.json next to RetroDS.exe to change how Batocera/Knulli folders map to ROCKNIX folders. Key = Batocera folder, value = ROCKNIX folder. Use null to skip a system.",
+  "jaguarcd": "atarijaguar",
+  "mystery": "ports",
+  "lcdgames": null
+}
