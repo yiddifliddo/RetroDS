@@ -1,6 +1,6 @@
 # RetroDS
 
-**Version 0.1.0** - Author: Dan Lee
+**Version 0.1.1** - Author: Dan Lee
 
 RetroDS is a small desktop tool that does two jobs the official
 [ROCKNIX ImageBurner](https://github.com/ROCKNIX/ImageBurner) does not:
@@ -17,6 +17,18 @@ RetroDS is a small desktop tool that does two jobs the official
 
 It is written in Python 3 with Tkinter (standard library only) and can be
 packaged as a single `RetroDS.exe`.
+
+## Download (no Python needed)
+
+Ready-built files are on the **Releases** page of this repository:
+
+* `RetroDS-<version>-windows.zip` - unzip, right-click `RetroDS.exe`, choose
+  **Run as administrator**.  `RetroDS-cli.exe` is the same program with a
+  console for command-line use.
+* `RetroDS-linux-x86_64` - `chmod +x` it and run it with `sudo` to write cards.
+
+Windows SmartScreen may warn about an unsigned program the first time; choose
+*More info* then *Run anyway*.
 
 ---
 
@@ -211,6 +223,14 @@ tests/                  unit tests
 ---
 
 ## Changelog
+
+### 0.1.1 - 2026-10-03
+
+* GitHub Actions workflow that runs the tests and builds `RetroDS.exe`
+  (GUI, asks for admin rights), `RetroDS-cli.exe` (console) and a Linux binary
+  on every push, and publishes them as a GitHub release when run manually with
+  *publish_release* ticked. No Python install is needed to use the release.
+* README: added the *Download* section.
 
 ### 0.1.0 - 2026-10-03
 

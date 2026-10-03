@@ -1,0 +1,105 @@
+name: Build RetroDS
+
+on:
+  push:
+    branches: ["**"]
+    paths-ignore: ["**.md"]
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Publish a GitHub release with the built files"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -v
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip -r requirements-dev.txt
+      - name: Build RetroDS.exe (GUI, asks for admin rights)
+        run: >
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --uac-admin
+          --name RetroDS --collect-submodules retrods retrods_launcher.py
+      - name: Build RetroDS-cli.exe (console version)
+        run: >
+          python -m PyInstaller --noconfirm --clean --onefile --console
+          --name RetroDS-cli --collect-submodules retrods retrods_launcher.py
+      - run: Copy-Item README.md, systems_map.example.json dist/
+      - run: dist/RetroDS-cli.exe --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RetroDS-windows
+          path: |
+            dist/RetroDS.exe
+            dist/RetroDS-cli.exe
+            dist/README.md
+            dist/systems_map.example.json
+
+  linux:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y python3-tk
+      - run: python -m pip install --upgrade pip -r requirements-dev.txt
+      - run: >
+          python -m PyInstaller --noconfirm --clean --onefile --name RetroDS
+          --collect-submodules retrods retrods_launcher.py
+      - run: dist/RetroDS --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RetroDS-linux
+          path: dist/RetroDS
+
+  release:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_release
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Read version
+        id: ver
+        run: echo "version=$(python3 -c 'import retrods; print(retrods.__version__)')" >> "$GITHUB_OUTPUT"
+      - name: Package
+        run: |
+          cd artifacts
+          mv RetroDS-linux/RetroDS RetroDS-linux/RetroDS-linux-x86_64
+          (cd RetroDS-windows && zip -r ../RetroDS-${{ steps.ver.outputs.version }}-windows.zip .)
+          ls -la . RetroDS-windows RetroDS-linux
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ steps.ver.outputs.version }}"
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" \
+            --target "${{ github.sha }}" \
+            --title "RetroDS ${{ steps.ver.outputs.version }}" \
+            --notes "Windows: download RetroDS-${{ steps.ver.outputs.version }}-windows.zip, unzip, right-click RetroDS.exe and Run as administrator. See README.md inside the zip." \
+            artifacts/RetroDS-${{ steps.ver.outputs.version }}-windows.zip \
+            artifacts/RetroDS-windows/RetroDS.exe \
+            artifacts/RetroDS-windows/RetroDS-cli.exe \
+            artifacts/RetroDS-linux/RetroDS-linux-x86_64
