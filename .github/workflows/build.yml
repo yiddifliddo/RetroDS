@@ -72,7 +72,9 @@ jobs:
           path: dist/RetroDS
 
   release:
-    if: github.event_name == 'workflow_dispatch' && inputs.publish_release
+    # Publishes (or refreshes) the release for the version in retrods/__init__.py
+    # on every push, and on manual runs with publish_release ticked.
+    if: github.event_name == 'push' || inputs.publish_release
     needs: [windows, linux]
     runs-on: ubuntu-latest
     steps:
